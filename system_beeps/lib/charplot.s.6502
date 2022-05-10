@@ -1,0 +1,161 @@
+;-------------------------------------------------------------------------
+; PrintChar
+;-------------------------------------------------------------------------
+; On entry  : A contains font character, X and Y contain location
+; On exit   : A, X and Y are preserved
+;-------------------------------------------------------------------------
+.PrintChar
+{
+    STA saveA
+
+    ; save registers
+	tya
+	pha
+	txa
+	pha
+    
+    LDA #0
+    STA temp            ; clear temp
+
+    STX screenAddr          
+    STY screenAddr+1
+
+    LDA saveA           ; Get font character
+    CLC                 ; clear carry
+    ASL A               ; *2
+    ASL A               ; *4
+    ASL A               ; *8
+    ROL temp            ; Store carry in temp 
+    STA chrFontAddr  
+    
+    ADC #LO(font_data)
+    STA chrFontAddr     ; Calculate and store font offset low byte
+
+    LDA #0
+    ADC temp            ; Add temp
+    ADC #HI(font_data)
+    STA chrFontAddr+1   ; Calculate and store font offset high byte
+
+    LDY #7              
+    STY left_bit   
+    LDY #15
+    STY right_bit  
+    
+.font_loop
+    LDY left_bit            ; use left_bit pointer to index into font address 7 - 0
+    LDA (chrFontAddr),Y     ; Point to font data
+    PHA                     ; Save font byte for left bit
+    AND #$0F                ; %00001111 
+    JSR GetColour           ; Get masked colour
+
+    LDY right_bit 
+    STA (screenAddr),Y      ; Draw right hand bit
+
+    PLA                     ; Restore font byte for left bit
+    LSR A                   ; /2
+    LSR A                   ; /4
+    LSR A                   ; /8
+    LSR A                   ; /16
+    JSR GetColour           ; Get masked colour
+
+    LDY left_bit   
+    STA (screenAddr),Y      ; Draw left hasnd bit
+
+    DEC right_bit
+    DEC left_bit
+
+    LDY left_bit
+    BPL font_loop           ; less than 0?
+    
+    ; Advance to next character position
+    CLC
+    LDA screenAddr
+    ADC #16
+    STA screenAddr
+    BCC finished
+    INC screenAddr+1
+
+.finished    
+    LDA saveA
+    pla
+	tax
+	pla
+	tay
+    RTS
+}
+
+;-------------------------------------------------------------------------
+; GetColour
+;-------------------------------------------------------------------------
+; On entry  : A contains bit
+; On exit   : A contains coloured bit   
+;-------------------------------------------------------------------------
+.GetColour
+{
+    TAX
+    LDY chrFontColour   ; Font colour
+    CPY #$02            ; Colour 2
+    BCC exit            ; less than 2
+    LDA colour_mask,X   ; get correct colour mask data  
+    CPY #$03            ; Colour 3
+    BEQ exit            ; equals 3
+    AND #$F0            ; %11110000
+.exit
+    RTS
+}
+
+.colour_mask
+EQUB $00,$11,$22,$33,$44,$55,$66,$77,$88,$99,$AA,$BB,$CC,$DD,$EE,$FF
+
+.font_data
+.char_sprite_0
+    EQUB $F0, $F0, $F0, $F0, $F0, $F0, $F0, $F0 ; ####....
+                                                ; ####....
+                                                ; ####....
+                                                ; ####....
+                                                ; ####....
+                                                ; ####....
+                                                ; ####....
+                                                ; ####....
+
+.char_sprite_1
+    EQUB $78, $78, $48, $48, $48, $58, $D8, $C0 ; .####...
+                                                ; .####...
+                                                ; .#..#...
+                                                ; .#..#...
+                                                ; .#..#...
+                                                ; .#.##...
+                                                ; ##.##...
+                                                ; ##......
+.char_sprite_2
+    EQUB $22, $88, $22, $88, $22, $88, $22, $88 ; ..#...#.
+                                                ; #...#...
+                                                ; ..#...#.
+                                                ; #...#...
+                                                ; ..#...#.
+                                                ; #...#...
+                                                ; ..#...#.
+                                                ; #...#...
+
+.char_sprite_3
+    EQUB $55, $AA, $55, $AA, $55, $AA, $55, $AA ; .#.#.#.#
+                                                ; #.#.#.#.
+                                                ; .#.#.#.#
+                                                ; #.#.#.#.
+                                                ; .#.#.#.#
+                                                ; #.#.#.#.
+                                                ; .#.#.#.#
+                                                ; #.#.#.#.
+
+.char_sprite_4
+    EQUB $77, $DD, $77, $DD, $77, $DD, $77, $DD ; .###.###
+                                                ; ##.###.#
+                                                ; .###.###
+                                                ; ##.###.#
+                                                ; .###.###
+                                                ; ##.###.#
+                                                ; .###.###
+                                                ; ##.###.#
+
+.char_sprite_5
+    EQUB $00, $00, $00, $00, $00, $00, $00, $00

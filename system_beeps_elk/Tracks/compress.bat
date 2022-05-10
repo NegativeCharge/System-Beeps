@@ -1,0 +1,1 @@
+for %%x in (*.bin) do bin\exomizer.exe raw -c -m 2048 "%%x" -o "%%~nx.bin.exo"

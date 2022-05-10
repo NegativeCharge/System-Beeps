@@ -1,0 +1,67 @@
+.renderTitleScreen {
+    LDA #LO(exomizer_3_file_name)           ; Load Exomizer
+    STA file_name + 0
+    LDA #HI(exomizer_3_file_name)
+    STA file_name + 1
+
+    LDA #LO(Exo_addr)
+    STA file_address + 0
+    LDA #HI(Exo_addr)
+    STA file_address + 1
+
+    JSR loadFile
+
+    LDA #LO(title_file_name)           ; Load compressed title screen
+    STA file_name + 0
+    LDA #HI(title_file_name)
+    STA file_name + 1
+
+    LDA #LO(DATA_ADDR)
+    STA file_address + 0
+    LDA #HI(DATA_ADDR)
+    STA file_address + 1 
+
+    JSR loadFile
+
+    LDX #LO(DATA_ADDR)
+    LDY #HI(DATA_ADDR)
+
+    LDA #HI(&3000)         ; destination for decompressed data, only hi byte needed (page)
+    JSR decrunch_to_page_A
+
+    RTS
+}
+
+.renderMenuScreen {
+    LDA #LO(exomizer_3_file_name)           ; Load Exomizer
+    STA file_name + 0
+    LDA #HI(exomizer_3_file_name)
+    STA file_name + 1
+
+    LDA #LO(Exo_addr)
+    STA file_address + 0
+    LDA #HI(Exo_addr)
+    STA file_address + 1
+
+    JSR loadFile
+
+    LDA #LO(menu_file_name)           ; Load compressed title screen
+    STA file_name + 0
+    LDA #HI(menu_file_name)
+    STA file_name + 1
+
+    LDA #LO(DATA_ADDR)
+    STA file_address + 0
+    LDA #HI(DATA_ADDR)
+    STA file_address + 1 
+
+    JSR loadFile
+
+    LDX #LO(DATA_ADDR)
+    LDY #HI(DATA_ADDR)
+
+    LDA #HI(&3000)         ; destination for decompressed data, only hi byte needed (page)
+    JSR decrunch_to_page_A
+
+    RTS
+}

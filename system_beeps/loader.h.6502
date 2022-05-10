@@ -1,0 +1,20 @@
+DEBUG = 0
+NUM_TRACKS = 23
+
+Loader_addr = &1100
+Exo_addr = &880
+Exo_small_buffer_addr = &440
+Exo_large_buffer_addr = &2800
+
+PAL_1 = 0
+PAL_2 = 7
+PAL_3 = 5
+PAL_4 = 2
+
+\\ Mode 1: Character Address = &3000 + (40 * y + x) * 16
+MODE1_base_addr = &3000
+MODE1_char_height = 32
+MODE1_char_width = 40
+
+.file_number        SKIP 1
+.last_key_pressed   SKIP 1

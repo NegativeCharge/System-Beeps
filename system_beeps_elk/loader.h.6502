@@ -1,0 +1,4 @@
+Exo_addr = &880
+Exo_small_buffer_addr = &440
+Exo_large_buffer_addr = &2800
+Loader_addr = &1100

@@ -1,0 +1,34 @@
+OSFILE = &FFDD
+OSRDCH = &FFE0
+OSWORD = &FFF1
+OSBYTE = &FFF4 
+OSWRCH = &FFEE
+OSNEWL = &FFE7 
+
+Mode_0_1_2_screen_addr = &3000
+Mode_3_screen_addr = &4000
+Mode_4_5_screen_addr = &5800
+Mode_6_screen_addr = &6000
+
+\\ Params block for osfile command
+.file_params		SKIP 18
+.file_name          SKIP 2
+.file_address       SKIP 2
+
+black                               = 0
+red                                 = 1
+green                               = 2
+yellow                              = 3
+blue                                = 4
+magenta                             = 5
+cyan                                = 6
+white                               = 7
+
+.palette_block      SKIP 5
+.temp               SKIP 1
+
+.readptr            SKIP 2
+.writeptr			SKIP 2
+.charptr            SKIP 2
+
+.oldrom             SKIP 1

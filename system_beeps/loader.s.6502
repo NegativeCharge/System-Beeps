@@ -1,0 +1,564 @@
+\ Allocate vars in ZP
+.zp_start
+ORG 0
+GUARD &9F
+
+\ Header Files
+INCLUDE ".\system_beeps\loader.h.6502"
+INCLUDE ".\system_beeps\lib\os.h.6502"
+INCLUDE ".\system_beeps\lib\exomizer\v2.0.9\exomizer.h.6502"
+INCLUDE ".\system_beeps\lib\exomizer\v3.1.0\exomizer.h.6502"
+INCLUDE ".\system_beeps\lib\vgmplayer.h.6502"
+INCLUDE ".\system_beeps\lib\charplot.h.6502"
+.zp_end
+
+CLEAR 0, &3000
+GUARD Loader_addr
+ORG Exo_addr
+.exo3_start
+	INCLUDE ".\system_beeps\lib\exomizer\v3.1.0\exomizer.s.6502"
+.exo3_end
+
+SAVE "EXO3", exo3_start, exo3_end
+
+\ ******************************************************************
+\ *	Memory Info
+\ ******************************************************************
+
+PRINT "---------------"
+PRINT "Exomizer 3     "
+PRINT "---------------"
+PRINT "CODE size =", ~exo3_end-exo3_start
+PRINT "---------------"
+PRINT "LOAD ADDR =", ~exo3_start
+PRINT "HIGH WATERMARK =", ~P%
+PRINT "RAM BYTES FREE =", ~&3000-P%
+PRINT "---------------"
+
+CLEAR 0, &3000
+GUARD &3000
+ORG Loader_addr
+
+; Define playback frequency - timed off the VIA 1Mhz timer1
+VIA_HZ = 1000000
+SAMP_HZ = 120 ;VGM playback frequency
+RHZ = (VIA_HZ / SAMP_HZ) - 2
+PRINT "TIMER1_RATE ", RHZ
+
+.loader_start
+INCLUDE ".\system_beeps\titleScreen.s.6502"
+INCLUDE ".\system_beeps\lib\os.s.6502"
+INCLUDE ".\system_beeps\lib\exomizer\v2.0.9\exomizer.s.6502"
+INCLUDE ".\system_beeps\lib\vgmplayer.s.6502"
+INCLUDE ".\system_beeps\lib\charplot.s.6502"
+
+.cursorState
+    EQUB 0
+.isPlaying
+    EQUB 0
+.exomizer_3_file_name
+    EQUS "$.EXO3", 13
+.menu_file_name
+    EQUS "$.MENU", 13
+.title_file_name
+    EQUS "$.COVER", 13
+
+.clearSelectedMenuItem
+{
+    LDY file_number
+    LDA menu_item_pos_lo,Y
+    TAX
+    LDA menu_item_pos_hi,Y
+    TAY
+    LDA #5
+    JMP PrintChar
+}
+
+.setSelectedMenuItem
+{
+    LDY file_number
+    LDA menu_item_pos_lo,Y
+    TAX
+    LDA menu_item_pos_hi,Y
+    TAY
+    LDA #3
+    STA chrFontColour
+    LDA #0
+    JMP PrintChar
+}
+
+.startPlayback
+{
+    JSR clearSelectedMenuItem
+
+    LDY file_number
+    LDA menu_item_pos_lo,Y
+    TAX
+    LDA menu_item_pos_hi,Y
+    TAY
+    LDA #3
+    STA chrFontColour
+    LDA #1
+    JSR PrintChar
+
+    LDA #1
+    STA isPlaying
+
+    RTS
+}
+
+.toggleCursor
+{
+    LDA isPlaying
+    BNE exit
+
+    INC ticks
+    LDA ticks
+    CMP #5
+    BNE exit
+
+    \\ Reset counter
+    LDA #0
+    STA ticks
+
+    LDA cursorState
+    EOR #1
+    STA cursorState
+    SEI
+    BEQ cursorOff
+    JSR setSelectedMenuItem
+    JMP exit
+.cursorOff
+    JSR clearSelectedMenuItem
+.exit
+    CLI
+    RTS
+}
+
+.trackEnded
+{
+    JSR clearSelectedMenuItem
+
+    INC file_number
+    LDA file_number
+    CMP #NUM_TRACKS
+    BCC lessThanMax
+
+    LDA #0
+    STA file_number
+
+.lessThanMax
+    LDA #0
+    STA isPlaying
+    STA track_ended
+
+    JSR setSelectedMenuItem
+    JMP playTrack
+}
+
+; Executable entry
+.entry
+    lda #200
+	ldx #3
+	jsr OSBYTE
+
+    LDA #0
+    STA file_number
+
+    \\ Set MODE 1
+	LDA #22: JSR OSWRCH
+	LDA #1: JSR OSWRCH
+
+    \\ Turn off cursor by directly poking crtc
+	SEI
+	LDA #10
+    STA &FE00
+	LDA #32
+    STA &FE01
+	CLI
+
+    JSR blankPalette
+    JSR renderTitleScreen
+    JSR setPalette
+
+.keyloop
+ 
+    \\ Wait for keypress within 2 secs
+    LDA #&81
+    LDX #200 
+    LDY #0
+    JSR OSBYTE
+
+    JSR blankPalette
+    JSR renderMenuScreen
+    JSR setPalette
+
+    LDY #0
+    STY cursorState
+    STY isPlaying
+    STY ticks
+    STY track_ended
+    STY vgm_player_ended
+
+    JSR setSelectedMenuItem
+
+.keyloop2
+    LDA #19
+    JSR OSBYTE
+
+    LDA track_ended
+    BNE trackEnded
+
+    JSR toggleCursor
+
+    \\ Check for pressed keys
+	LDA #121
+	LDX #&10
+	JSR OSBYTE
+
+    \\ Still holding same key
+    CPX last_key_pressed
+    BEQ keyloop2
+
+    \\ Remember current key
+    STX last_key_pressed
+
+	\\ Any key pressed?
+    CPX #&FF
+    BEQ keyloop2
+
+    LDA isPlaying
+    BNE stopPlayback
+
+     \\ Has the Up cursor been pressed?
+    CPX #&39
+    BEQ selectPreviousMenuItem
+
+    \\ Has the Down cursor been pressed?
+    CPX #&29
+    BEQ selectNextMenuItem
+
+    \\ Has Return been pressed?
+    CPX #&49
+    BNE keyloop2
+
+.playTrack
+    JSR startPlayback
+
+    \ Load track into memory
+    LDA file_number
+    ASL A:ASL A:ASL A               ; track_filenumber * 8 bytes per filename
+
+    \ Set osfile param block
+	CLC
+	ADC #LO(track_filenames)
+	STA file_name + 0
+	LDA #HI(track_filenames)
+	ADC #0
+	STA file_name + 1
+
+    LDA #LO(DATA_ADDR)
+    STA file_address + 0
+    LDA #HI(DATA_ADDR)
+    STA file_address + 1
+
+    JSR loadFile
+
+    LDX #LO(DATA_ADDR)
+    LDY #HI(DATA_ADDR)
+
+    JSR	vgm_init_stream
+
+    jsr inittimer1irq
+
+    JMP keyloop2
+
+.selectPreviousMenuItem
+    JSR clearSelectedMenuItem
+    DEC file_number
+    BPL aboveZero
+    LDA #NUM_TRACKS-1
+    STA file_number
+
+.aboveZero
+    JSR setSelectedMenuItem
+    JMP keyloop2
+
+.selectNextMenuItem
+    JSR clearSelectedMenuItem
+    INC file_number
+    LDA file_number
+    CMP #NUM_TRACKS
+    BCC lessThanMax
+
+    LDA #0
+    STA file_number
+
+.lessThanMax
+    JSR setSelectedMenuItem
+    JMP keyloop2
+
+.stopPlayback
+    JSR clearSelectedMenuItem
+    JSR setSelectedMenuItem
+
+    LDA #0
+    STA isPlaying
+    STA track_ended
+
+    JSR vgm_deinit_player
+
+    JMP keyloop2
+
+; IRQ handler
+.inittimer1irq
+{
+    LDA irq1vTimerInit
+    BNE alreadyRun
+
+    lda #1
+    sta irq1vTimerInit
+
+	lda &204
+	ldx &205
+	sta oldirq1v+0
+	stx oldirq1v+1
+	
+	sei
+
+	; Continuous interrupts for timer 1.
+	lda SHEILA_USER_VIA_R11_ACR
+    sta oldacr
+	and #&3f
+	ora #&40
+	sta SHEILA_USER_VIA_R11_ACR
+	
+	; Point at IRQ handler
+	lda #LO(irqhandler)
+	ldx #HI(irqhandler)
+	sta &204
+	stx &205
+	
+	; Enable Usr timer1 interrupt
+    LDA SHEILA_USER_VIA_R14_IER
+    STA oldier
+
+	lda #&C0
+	sta SHEILA_USER_VIA_R14_IER
+	
+	; load timer1 counter
+	ldx #LO(RHZ)
+	lda #HI(RHZ)
+
+	stx SHEILA_USER_VIA_R4_T1C_L
+	sta SHEILA_USER_VIA_R5_T1C_H
+
+	cli
+
+.alreadyRun
+	rts
+}
+
+.deinittimer1irq
+{
+    sei
+
+    ; Restore old Usr timer1 interrupt
+    LDA oldirq1v+0
+    STA &204
+    LDA oldirq1v+1
+    STA &205
+
+    \LDA oldier
+    \STA SHEILA_USER_VIA_R14_IER                  
+    \LDA oldacr
+    \STA SHEILA_USER_VIA_R11_ACR               
+
+    cli
+    rts
+}
+
+.exitirq
+{
+	pla
+	sta &fc
+	jmp (oldirq1v)
+}
+
+.irqhandler
+{
+	lda &fc
+	pha
+	
+	; check bit 6 (timer1 irq flag)
+	lda #64
+	bit SHEILA_USER_VIA_R13_IFR
+
+	; bit 7 of IFR => N flag (6522 IRQ)
+	; bit 6 of IFR => V flag (Timer1 IRQ)
+	; Z flag set if bit 6 is clear (Timer1 IRQ)
+
+	; if top bit is clear, this is not an interrupt from 6522 (user VIA).
+	bpl exitirq
+
+	; not timer1 irq, so process next in chain
+	beq exitirq
+
+	; save registers
+	tya
+	pha
+	txa
+	pha
+
+	; Clear timer1 interrupt flag by reading T1C 
+	lda SHEILA_USER_VIA_R4_T1C_L
+	
+	; routine
+
+	lda reentry
+	bne skip_poll
+	lda #1
+	sta reentry
+
+    LDA isPlaying
+    BEQ continue
+
+	\ Play note here   
+    jsr vgm_poll_player
+
+IF DEBUG
+    LDX #38
+    LDY #30
+    JSR printtab
+ENDIF
+
+    LDA vgm_player_ended
+    BNE ended
+
+IF DEBUG
+    LDA #&30
+    JSR OSWRCH
+ENDIF
+
+    JMP continue
+
+.ended
+IF DEBUG
+    LDA #&31
+    JSR OSWRCH
+ENDIF
+
+.continue
+	lda #0
+	sta reentry
+
+.skip_poll
+	
+	pla
+	tax
+	pla
+	tay
+	pla
+	sta &fc
+	rti
+
+.reentry
+    EQUB 0
+}
+
+.printtab
+{
+    LDA #31
+    JSR OSWRCH 
+    TXA
+    JSR OSWRCH 
+    TYA
+    JMP OSWRCH
+}
+
+.track_filenames
+    EQUS ":0.$.T1", 13
+    EQUS ":0.$.T2", 13
+    EQUS ":0.$.T3", 13
+    EQUS ":0.$.T4", 13
+    EQUS ":0.$.T5", 13
+    EQUS ":0.$.T6", 13
+    EQUS ":0.$.T7", 13
+    EQUS ":0.$.T8", 13
+    EQUS ":0.$.T9", 13
+    EQUS ":0.$.TA", 13
+    EQUS ":0.$.TB", 13
+    EQUS ":0.$.TC", 13
+    EQUS ":0.$.TD", 13
+    EQUS ":0.$.TE", 13
+    EQUS ":0.$.TF", 13
+    EQUS ":0.$.U1", 13
+    EQUS ":0.$.U2", 13
+    EQUS ":0.$.U3", 13
+    EQUS ":0.$.U4", 13
+    EQUS ":0.$.U5", 13
+    EQUS ":0.$.U6", 13
+    EQUS ":0.$.U7", 13
+    EQUS ":0.$.U8", 13
+
+.menu_item_pos_lo
+EQUB &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0
+
+.menu_item_pos_hi
+EQUS &4B, &4E, &50, &53, &55, &58, &5A, &5D, &5F, &62, &64, &67, &69, &6C, &6E, &71, &4C, &4F, &51, &54, &56, &59, &60
+
+.loader_end
+
+SAVE "LOADER", loader_start, loader_end, entry
+
+\ ******************************************************************
+\ *	Memory Info
+\ ******************************************************************
+
+PRINT "---------------"
+PRINT "Loader"
+PRINT "---------------"
+PRINT "CODE size =", ~loader_end-loader_start
+PRINT "---------------"
+PRINT "LOAD ADDR =", ~loader_start
+PRINT "HIGH WATERMARK =", ~P%
+PRINT "RAM BYTES FREE =", ~&7C00-P%
+PRINT "---------------"
+
+DATA_ADDR = P%
+
+\ ******************************************************************
+\ * Supporting Files
+\ ******************************************************************
+
+PUTFILE ".\system_beeps\screens\cover.exo","COVER",DATA_ADDR
+PUTFILE ".\system_beeps\screens\menu.exo","MENU",DATA_ADDR
+PUTFILE ".\system_beeps\BOOT","!BOOT",&FFFF
+
+\ ******************************************************************
+\ * Track Data
+\ ******************************************************************
+
+PUTFILE ".\system_beeps\tracks\sys.bin.exo", "T1", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\tmb.bin.exo", "T2", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\btl.bin.exo", "T3", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\mnc.bin.exo", "T4", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\hst.bin.exo", "T5", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\bad.bin.exo", "T6", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\dld.bin.exo", "T7", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\hsh.bin.exo", "T8", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\flo.bin.exo", "T9", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\pxl.bin.exo", "TA", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\ssd.bin.exo", "TB", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\led.bin.exo", "TC", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\clo.bin.exo", "TD", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\txr.bin.exo", "TE", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\srv.bin.exo", "TF", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\stf.bin.exo", "U1", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\asf.bin.exo", "U2", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\run.bin.exo", "U3", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\mym.bin.exo", "U4", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\sqw.bin.exo", "U5", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\fin.bin.exo", "U6", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\coy.bin.exo", "U7", DATA_ADDR
+PUTFILE ".\system_beeps\tracks\aon.bin.exo", "U8", DATA_ADDR

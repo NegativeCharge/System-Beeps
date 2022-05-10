@@ -1,0 +1,115 @@
+.initEventHandler
+{
+    SEI
+
+    \\ Hook the interval timer
+    LDA &220
+    STA eventHandlerOldEvent
+
+    LDA &221
+    STA eventHandlerOldEvent+1
+
+    LDA #LO(eventHandler)
+    STA &220
+
+    LDA #HI(eventHandler)
+    STA &221
+
+    CLI
+}
+
+.enableIntervalTimer
+{
+    JSR armTimer
+
+    \ Enable Interval Timer Crossing Zeroevent
+    LDA #14
+    LDX #5
+    JMP OSBYTE                       ; *FX14,5
+}
+
+.enableVsync
+{
+    \ Enable VSync event
+    LDA #14
+    LDX #4
+    JMP OSBYTE                       ; *FX14,4
+}
+
+.disableIntervalTimer
+{
+    \ Disable Interval Timer Crossing Zeroevent
+    LDA #13
+    LDX #5
+    JMP OSBYTE      ; *FX13,5
+}
+
+.disableVsync
+{
+    \ Disable VSync event
+    LDA #13
+    LDX #4
+    JMP OSBYTE      ; *FX13,4}
+}
+
+.deinitEventHandler
+{
+    \ Reset old Event handler
+    SEI
+    LDA eventHandlerOldEvent
+    STA &220
+    LDA eventHandlerOldEvent+1
+    STA &221
+    CLI 
+
+    RTS
+}
+
+.eventHandler
+{
+    PHP
+
+    CMP #4                                  ; Start of VSYNC
+    BNE checkIntervalTimerCrossingZeroEvent
+    JSR startOfVsyncEvent
+    JMP done
+
+.checkIntervalTimerCrossingZeroEvent
+    CMP #5                                  ; Interval timer crossing zero
+    BNE checkEscapeConditionDetectedEvent
+    JSR intervalTimerCrossingZeroEvent
+    JMP done
+
+.checkEscapeConditionDetectedEvent
+    CMP #6                                  ; ESCAPE condition detected
+    JSR escapeConditionDetectedEvent
+
+.done
+    PLP
+    JMP (eventHandlerOldEvent)
+}
+
+.startOfVsyncEvent
+{
+    JMP toggleCursor
+}
+
+.intervalTimerCrossingZeroEvent
+{
+    LDA isPlaying
+    BEQ exit
+
+    JSR playNote
+    JMP armTimer
+.exit
+    RTS
+}
+
+.escapeConditionDetectedEvent
+{
+    RTS
+}
+
+.intTimer
+    EQUB 0
+    EQUD &FFFFFFFF

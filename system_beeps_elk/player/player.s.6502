@@ -1,0 +1,109 @@
+.initPlayer {
+    LDA #LO(exomizer_2_file_name)           ; Load Exomizer
+    STA file_name + 0
+    LDA #HI(exomizer_2_file_name)
+    STA file_name + 1
+
+    LDA #LO(Exo_addr)
+    STA file_address + 0
+    LDA #HI(Exo_addr)
+    STA file_address + 1
+
+    JSR loadFile
+
+    LDA #1
+    ASL A:ASL A:ASL A
+    PHA
+    ORA #sndon
+    STA elksndon
+    PLA
+    ORA #sndoff
+    STA elksndoff
+
+    RTS
+}
+
+.playNote
+{
+    \\ Read pitch value
+    JSR exo_get_decrunched_byte
+    BCS endTrack
+
+    CMP ep_last_tone
+    BEQ continue
+
+    STA ep_tone
+    JSR play_tone
+
+.continue
+    LDA ep_tone
+    STA ep_last_tone
+
+    JMP exit
+
+.endTrack
+    JSR soundoff
+    JSR disableIntervalTimer
+
+    LDA #0
+    STA isPlaying
+
+    LDA #&FF
+    STA track_ended
+
+.exit
+    RTS
+}
+
+.play_tone
+{
+    CMP #&02
+    BCC turn_off_sound
+    JSR soundon
+    JMP continue
+
+.turn_off_sound
+    LDA #&FF
+    JSR soundoff
+.continue
+    STA &FE06
+        
+    RTS
+}
+
+.soundon
+{
+    LDX #&0F
+    STX ep_vol
+
+    LDX elksndon
+    STX &FE07
+
+    RTS
+}
+
+.soundoff
+{
+    LDX #0
+    STX ep_vol
+
+    LDX elksndoff
+    STX &FE07
+
+    RTS
+}
+
+.armTimer
+{
+    LDA #&FF
+    STA intTimer
+    STA intTimer+1
+
+    LDX #LO(intTimer)
+    LDY #HI(intTimer)
+
+    LDA #4
+    JSR OSWORD                        ; Write interval timer
+
+    RTS
+}

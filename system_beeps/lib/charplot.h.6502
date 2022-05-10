@@ -1,0 +1,9 @@
+.saveA          SKIP 1
+.counter        SKIP 1
+.temp           SKIP 1
+.right_bit      SKIP 1
+.left_bit       SKIP 1
+.chrFontColour  SKIP 1
+
+.chrFontAddr    SKIP 2
+.screenAddr     SKIP 2

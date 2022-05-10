@@ -1,0 +1,190 @@
+\ Allocate vars in ZP
+ORG &4A
+GUARD &9F
+
+.zp_start
+
+\ Header Files
+INCLUDE ".\system_beeps_elk\loader.h.6502"
+INCLUDE ".\system_beeps_elk\menu.h.6502"
+
+INCLUDE ".\system_beeps_elk\lib\os.h.6502"
+INCLUDE ".\system_beeps_elk\lib\charplot.h.6502"
+INCLUDE ".\system_beeps_elk\lib\eventHandler.h.6502"
+INCLUDE ".\system_beeps_elk\lib\exomizer\v2.0.9\exomizer.h.6502"
+INCLUDE ".\system_beeps_elk\lib\exomizer\v3.1.0\exomizer.h.6502"
+
+INCLUDE ".\system_beeps_elk\player\player.h.6502"
+.zp_end
+
+\ ******************************************************************
+\ *	Memory Info
+\ ******************************************************************
+
+PRINT "---------------"
+PRINT "Zero Page      "
+PRINT "---------------"
+PRINT "CODE size =", ~zp_end-zp_start
+PRINT "---------------"
+PRINT "LOAD ADDR =", ~zp_start
+PRINT "HIGH WATERMARK =", ~P%
+PRINT "---------------"
+
+
+CLEAR 0, Mode_0_1_2_screen_addr
+GUARD Loader_addr
+ORG Exo_addr
+.exo2_start
+	INCLUDE ".\system_beeps_elk\lib\exomizer\v2.0.9\exomizer.s.6502"
+.exo2_end
+
+SAVE "EXO2", exo2_start, exo2_end
+
+\ ******************************************************************
+\ *	Memory Info
+\ ******************************************************************
+
+PRINT "---------------"
+PRINT "Exomizer 2     "
+PRINT "---------------"
+PRINT "CODE size =", ~exo2_end-exo2_start
+PRINT "---------------"
+PRINT "LOAD ADDR =", ~exo2_start
+PRINT "HIGH WATERMARK =", ~P%
+PRINT "RAM BYTES FREE =", ~Mode_4_5_screen_addr-P%
+PRINT "---------------"
+
+CLEAR 0, Mode_0_1_2_screen_addr
+GUARD Loader_addr
+ORG Exo_addr
+.exo3_start
+	INCLUDE ".\system_beeps_elk\lib\exomizer\v3.1.0\exomizer.s.6502"
+.exo3_end
+
+SAVE "EXO3", exo3_start, exo3_end
+
+\ ******************************************************************
+\ *	Memory Info
+\ ******************************************************************
+
+PRINT "---------------"
+PRINT "Exomizer 3     "
+PRINT "---------------"
+PRINT "CODE size =", ~exo3_end-exo3_start
+PRINT "---------------"
+PRINT "LOAD ADDR =", ~exo3_start
+PRINT "HIGH WATERMARK =", ~P%
+PRINT "RAM BYTES FREE =", ~Mode_4_5_screen_addr-P%
+PRINT "---------------"
+
+CLEAR 0, Mode_0_1_2_screen_addr
+GUARD Mode_0_1_2_screen_addr
+ORG Loader_addr
+
+.loader_start
+    INCLUDE ".\system_beeps_elk\titleScreen.s.6502"
+
+    \ Library Files
+    INCLUDE ".\system_beeps_elk\lib\os.s.6502"
+    INCLUDE ".\system_beeps_elk\lib\charplot.s.6502"
+
+    .exomizer_2_file_name
+        EQUS "$.EXO2", 13
+    .exomizer_3_file_name
+        EQUS "$.EXO3", 13
+    .title_file_name
+        EQUS "$.COVER", 13
+    .menu_file_name
+        EQUS "$.MENU", 13
+
+    INCLUDE ".\system_beeps_elk\lib\eventHandler.s.6502"
+    INCLUDE ".\system_beeps_elk\player\player.s.6502"
+    
+    INCLUDE ".\system_beeps_elk\menu.s.6502"
+
+.menu_item_pos_lo
+EQUB &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0
+
+.menu_item_pos_hi
+EQUS &4B, &4E, &50, &53, &55, &58, &5A, &5D, &5F, &62, &64, &67, &69, &6C, &6E, &71, &4C, &4F, &51, &54, &56, &59, &60
+
+.track_filenames
+    EQUS ":0.$.T1", 13
+    EQUS ":0.$.T2", 13
+    EQUS ":0.$.T3", 13
+    EQUS ":0.$.T4", 13
+    EQUS ":0.$.T5", 13
+    EQUS ":0.$.T6", 13
+    EQUS ":0.$.T7", 13
+    EQUS ":0.$.T8", 13
+    EQUS ":0.$.T9", 13
+    EQUS ":0.$.TA", 13
+    EQUS ":0.$.TB", 13
+    EQUS ":0.$.TC", 13
+    EQUS ":0.$.TD", 13
+    EQUS ":0.$.TE", 13
+    EQUS ":0.$.TF", 13
+    EQUS ":0.$.U1", 13
+    EQUS ":0.$.U2", 13
+    EQUS ":0.$.U3", 13
+    EQUS ":0.$.U4", 13
+    EQUS ":0.$.U5", 13
+    EQUS ":0.$.U6", 13
+    EQUS ":0.$.U7", 13
+    EQUS ":0.$.U8", 13
+
+.loader_end
+
+SAVE "LOADER", loader_start, loader_end
+
+\ ******************************************************************
+\ *	Memory Info
+\ ******************************************************************
+
+PRINT "---------------"
+PRINT "Loader"
+PRINT "---------------"
+PRINT "CODE size =", ~loader_end-loader_start
+PRINT "---------------"
+PRINT "LOAD ADDR =", ~loader_start
+PRINT "HIGH WATERMARK =", ~P%
+PRINT "RAM BYTES FREE =", ~Mode_0_1_2_screen_addr-P%
+PRINT "---------------"
+
+DATA_ADDR = P%
+
+\ ******************************************************************
+\ * Supporting Files
+\ ******************************************************************
+
+PUTFILE ".\system_beeps_elk\screens\cover.exo","COVER",DATA_ADDR
+PUTFILE ".\system_beeps_elk\screens\menu.exo","MENU",DATA_ADDR
+PUTFILE ".\system_beeps_elk\BOOT","!BOOT",&FFFF
+
+\ ******************************************************************
+\ * Track Data
+\ ******************************************************************
+
+PUTFILE ".\system_beeps_elk\tracks\sys.bin.exo", "T1", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\tmb.bin.exo", "T2", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\btl.bin.exo", "T3", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\mnc.bin.exo", "T4", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\hst.bin.exo", "T5", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\bad.bin.exo", "T6", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\dld.bin.exo", "T7", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\hsh.bin.exo", "T8", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\flo.bin.exo", "T9", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\pxl.bin.exo", "TA", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\ssd.bin.exo", "TB", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\led.bin.exo", "TC", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\clo.bin.exo", "TD", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\txr.bin.exo", "TE", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\srv.bin.exo", "TF", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\stf.bin.exo", "U1", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\asf.bin.exo", "U2", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\run.bin.exo", "U3", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\mym.bin.exo", "U4", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\sqw.bin.exo", "U5", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\fin.bin.exo", "U6", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\coy.bin.exo", "U7", DATA_ADDR
+PUTFILE ".\system_beeps_elk\tracks\aon.bin.exo", "U8", DATA_ADDR

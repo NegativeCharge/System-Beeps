@@ -1,0 +1,11 @@
+sndon  = %00000010
+sndoff = %00000000
+
+.elksndon           SKIP 1
+.elksndoff          SKIP 1
+
+.ep_tone               SKIP 1
+.ep_last_tone          SKIP 1
+.ep_vol                SKIP 1
+
+.track_ended				SKIP 1

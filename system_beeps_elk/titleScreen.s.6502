@@ -1,0 +1,58 @@
+    LDA #200                                ; Disable default Escape key action
+	LDX #1
+	JSR OSBYTE
+
+    LDX #1:JSR changeScreenMode
+
+    LDA #6:JSR tempChangeScreenMode         ; Temporarily set Mode 6
+
+    JSR cursorOffAlt                        ; Turn off cursor
+
+    LDA #LO(exomizer_3_file_name)           ; Load Exomizer
+    STA file_name + 0
+    LDA #HI(exomizer_3_file_name)
+    STA file_name + 1
+
+    LDA #LO(Exo_addr)
+    STA file_address + 0
+    LDA #HI(Exo_addr)
+    STA file_address + 1
+
+    JSR loadFile
+
+    LDA #LO(title_file_name)           ; Load compressed title screen
+    STA file_name + 0
+    LDA #HI(title_file_name)
+    STA file_name + 1
+
+    LDA #LO(DATA_ADDR)
+    STA file_address + 0
+    LDA #HI(DATA_ADDR)
+    STA file_address + 1 
+
+    JSR loadFile
+    
+    JSR keyboardInteruptOff
+    JSR blankPalette
+
+    LDX #LO(DATA_ADDR)
+    LDY #HI(DATA_ADDR)
+
+    LDA #HI(Mode_0_1_2_screen_addr)         ; destination for decompressed data, only hi byte needed (page)
+    JSR decrunch_to_page_A
+
+    JSR restoreScreenMode
+
+    LDX #1:LDY #7:JSR setPaletteColour  ; set title screen colours
+    LDX #2:LDY #5:JSR setPaletteColour
+    LDX #3:LDY #2:JSR setPaletteColour
+
+.keyLoop
+
+    \\ Wait for keypress within 2 secs
+    LDA #&81
+    LDX #200 
+    LDY #0
+    JSR OSBYTE
+
+    JMP initMenuLoop                    ; menu.s.6502

@@ -1,0 +1,312 @@
+.initMenuLoop
+    LDX #1:JSR changeScreenMode
+
+    LDA #6:JSR tempChangeScreenMode        ; Temporarily set Mode 6
+
+    JSR cursorOff                           ; Turn off cursor
+
+    JSR blankPalette
+
+    LDA #LO(exomizer_3_file_name)           ; Load Exomizer
+    STA file_name + 0
+    LDA #HI(exomizer_3_file_name)
+    STA file_name + 1
+
+    LDA #LO(Exo_addr)
+    STA file_address + 0
+    LDA #HI(Exo_addr)
+    STA file_address + 1
+
+    JSR loadFile
+
+    LDA #LO(menu_file_name)           ; Load compressed title screen
+    STA file_name + 0
+    LDA #HI(menu_file_name)
+    STA file_name + 1
+
+    LDA #LO(DATA_ADDR)
+    STA file_address + 0
+    LDA #HI(DATA_ADDR)
+    STA file_address + 1 
+
+    JSR loadFile
+
+    LDX #LO(DATA_ADDR)
+    LDY #HI(DATA_ADDR)
+
+    LDA #HI(Mode_0_1_2_screen_addr)         ; destination for decompressed data, only hi byte needed (page)
+    JSR decrunch_to_page_A
+
+    JSR restoreScreenMode
+
+    LDX #1:LDY #7:JSR setPaletteColour  ; set menu screen colours
+    LDX #2:LDY #5:JSR setPaletteColour
+    LDX #3:LDY #2:JSR setPaletteColour
+
+    LDA #0
+    STA &BFFB
+    STA &BFFD
+    STA file_number
+    STA isPlaying
+    STA ticks
+    STA cursorState
+    STA track_ended
+
+    \ Load Exomizer 2
+    JSR initPlayer
+
+    JSR initEventHandler
+    JSR disableIntervalTimer
+    JSR enableVsync
+
+.main_loop
+
+    LDA track_ended
+    BNE trackEnded
+
+    ; Column    Address Bit 0   Bit 1   Bit 2   Bit 3
+    ; 1         &BFFD   Left    Down    Return  Delete
+    ; 2         &BFFB   -       Up      :       NC
+
+    \\ Has the Up cursor been pressed?
+    LDA &BFFB           \ -=1, Up=2, :=4
+    AND #2              \ Up
+    CMP #0
+    BNE jumpSelectPreviousMenuItem
+
+    \\ Has the Down cursor been pressed?
+    LDA &BFFD           \ Left=1, Down=2, Return=4, Delete=8
+    AND #2              \ Down
+    CMP #0
+    BNE jumpSelectNextMenuItem
+
+    \\ Has Return been pressed?
+    LDA &BFFD           \ Left=1, Down=2, Return=4, Delete=8
+    AND #4              \ Return
+    CMP #0
+    BNE itemSelected
+
+    LDA #&FF
+    STA last_key_pressed
+
+    JMP main_loop
+
+.trackEnded
+{
+    JSR clearSelectedMenuItem
+
+    INC file_number
+    LDA file_number
+    CMP #NUM_TRACKS
+    BCC lessThanMax
+
+    LDA #0
+    STA file_number
+
+.lessThanMax
+    LDA #0
+    STA isPlaying
+    STA last_key_pressed
+    STA track_ended
+
+    JSR setSelectedMenuItem
+    JMP itemSelected
+}
+
+.jumpSelectPreviousMenuItem
+{
+    jmp selectPreviousMenuItem
+}
+
+.jumpSelectNextMenuItem
+{
+    jmp selectNextMenuItem
+}
+
+.itemSelected
+{
+    LDA #&B0
+    CMP last_key_pressed
+    BEQ main_loop
+
+    STA last_key_pressed
+
+    JSR disableVsync
+
+    LDY #&B0
+    LDA isPlaying
+    BNE stopPlayback
+
+    LDY file_number
+    LDA menu_item_pos_lo,Y
+    TAX
+    LDA menu_item_pos_hi,Y
+    TAY
+    LDA #3
+    STA chrFontColour
+    LDA #1
+    JSR PrintChar
+
+    LDA #1
+    STA isPlaying
+
+    \ Load track into memory
+    LDA file_number
+    ASL A:ASL A:ASL A               ; track_filenumber * 8 bytes per filename
+
+    \ Set osfile param block
+	CLC
+	ADC #LO(track_filenames)
+	STA file_name + 0
+	LDA #HI(track_filenames)
+	ADC #0
+	STA file_name + 1
+
+    LDA #LO(DATA_ADDR)
+    STA file_address + 0
+    LDA #HI(DATA_ADDR)
+    STA file_address + 1
+
+    JSR loadFile
+
+    LDX #LO(DATA_ADDR)
+    LDY #HI(DATA_ADDR)
+
+    \\ Initialize Exomizer
+    JSR exo_init_decruncher
+    JSR enableIntervalTimer
+    JSR armTimer
+
+    JMP main_loop
+}
+
+.stopPlayback
+{
+    STY last_key_pressed
+
+    JSR clearSelectedMenuItem
+    JSR setSelectedMenuItem
+
+    JSR soundoff
+    JSR disableIntervalTimer
+
+    LDA #0
+    STA isPlaying
+    STA track_ended
+
+    JSR enableVsync
+
+    JMP main_loop
+}
+
+.jumpMainLoop
+{
+    jmp main_loop
+}
+
+.selectPreviousMenuItem
+{
+    LDA #&C0
+    CMP last_key_pressed
+    BEQ jumpMainLoop
+
+    STA last_key_pressed
+
+    LDY #&C0
+    LDA isPlaying
+    BNE stopPlayback
+
+    JSR clearSelectedMenuItem
+    DEC file_number
+    BPL aboveZero
+    LDA #NUM_TRACKS-1
+    STA file_number
+
+.aboveZero
+    JSR setSelectedMenuItem
+    JMP main_loop
+}
+
+.selectNextMenuItem
+{
+    LDA #&D0
+    CMP last_key_pressed
+    BEQ jumpMainLoop
+
+    STA last_key_pressed
+
+    LDY #&D0
+    LDA isPlaying
+    BNE stopPlayback
+    
+    JSR clearSelectedMenuItem
+    INC file_number
+    LDA file_number
+    CMP #NUM_TRACKS
+    BCC lessThanMax
+
+    LDA #0
+    STA file_number
+
+.lessThanMax
+    JSR setSelectedMenuItem
+    JMP main_loop
+}
+
+.clearSelectedMenuItem
+{
+    LDY file_number
+    LDA menu_item_pos_lo,Y
+    TAX
+    LDA menu_item_pos_hi,Y
+    TAY
+    LDA #5
+    JMP PrintChar
+}
+
+.setSelectedMenuItem
+{
+    LDY file_number
+    LDA menu_item_pos_lo,Y
+    TAX
+    LDA menu_item_pos_hi,Y
+    TAY
+    LDA #3
+    STA chrFontColour
+    LDA #0
+    JMP PrintChar
+}
+
+.toggleCursor
+{
+    LDA isPlaying
+    BNE exit
+
+    INC ticks
+    LDA ticks
+    CMP #8
+    BNE exit
+
+    \\ Reset counter
+    LDA #0
+    STA ticks
+
+    LDA cursorState
+    EOR #1
+    STA cursorState
+
+    BEQ cursorOff
+    JSR setSelectedMenuItem
+    JMP exit
+
+.cursorOff
+    JSR clearSelectedMenuItem
+
+.exit
+    RTS
+}
+
+.isPlaying
+    EQUB 0
+.cursorState
+    EQUB 0

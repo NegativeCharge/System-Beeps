@@ -1,0 +1,5 @@
+    NUM_TRACKS = 23
+
+    .file_number        SKIP 1
+    .last_key_pressed   SKIP 1
+    .ticks              SKIP 1

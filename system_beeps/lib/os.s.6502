@@ -1,0 +1,80 @@
+.loadFile
+{
+	\\ Set osfile param block
+	LDA file_name
+	STA file_params + 0
+	LDA file_name + 1
+	STA file_params + 1
+
+	LDA file_address
+	STA file_params + 2
+	LDA file_address + 1
+	STA file_params + 3
+
+	LDA #0
+	STA file_params + 6
+
+	\\ Issue osfile call
+	LDX #LO(file_params)
+	LDY #HI(file_params)
+	LDA #&FF
+	JSR OSFILE
+
+    RTS
+}
+
+.blankPalette
+{
+    LDY #0
+    LDA #0
+    JSR os_palette
+
+    LDY #1
+    LDA #0
+    JSR os_palette
+
+    LDY #2
+    LDA #0
+    JSR os_palette
+
+    LDY #3
+    LDA #0
+    JSR os_palette
+}
+
+.setPalette 
+{
+    LDY #0
+    LDA #PAL_1
+    JSR os_palette
+
+    LDY #1
+    LDA #PAL_2
+    JSR os_palette
+
+    LDY #2
+    LDA #PAL_3
+    JSR os_palette
+
+    LDY #3
+    LDA #PAL_4
+    JMP os_palette
+}
+
+.os_palette
+{
+    STY paletteblock+0
+    STA paletteblock+1
+    LDX #LO(paletteblock)
+    LDY #HI(paletteblock)
+    LDA #12
+
+    JMP OSWORD
+}
+
+.paletteblock
+.paletteblock_logical
+    EQUB 0
+.paletteblock_physical
+    EQUB 0
+    EQUB 0,0,0

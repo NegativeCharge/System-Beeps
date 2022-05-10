@@ -1,0 +1,226 @@
+.blankPalette
+{
+    LDX #3
+    STX temp
+.loop
+    LDY #black
+    LDA #0
+    STX palette_block+0
+    STY palette_block+1
+    STA palette_block+2
+    STA palette_block+3
+    STA palette_block+4
+    
+    JSR setPalette
+
+    LDX temp
+    DEX
+    STX temp
+    BNE loop
+
+    RTS
+}
+
+.changeScreenMode
+{
+    LDA #22
+    JSR OSWRCH
+    TXA
+	JSR OSWRCH
+
+    RTS
+}
+
+.cursorOff
+{
+    ;VDU 23,1,0,0,0,0,0,0,0,0
+    LDA #23
+    JSR OSWRCH
+    LDA #1
+    JSR OSWRCH
+    LDA #0
+    JSR OSWRCH:JSR OSWRCH:JSR OSWRCH:JSR OSWRCH:JSR OSWRCH:JSR OSWRCH:JSR OSWRCH:JSR OSWRCH
+
+    RTS
+}
+
+.cursorOffAlt
+{
+    LDA #16
+    STA &D0
+
+    RTS
+}
+
+.keyboardInteruptOn
+{
+	PHP:PHA
+
+    SEI
+
+    LDA oldrom
+    STA &F4
+    STA &FE05
+
+    LDA #&FF
+    STA &242
+
+    CLI
+
+	PLA:PLP
+
+	RTS
+}
+
+.keyboardInteruptOff
+{
+	PHP:PHA
+
+    SEI
+
+	LDA #0
+    STA &242
+
+    LDA &F4
+    STA oldrom
+
+    LDA #8
+    STA &F4
+    STA &FE05
+
+    CLI
+
+	PLA:PLP
+
+	RTS
+}
+
+.loadFile
+{
+    JSR keyboardInteruptOn
+
+	\\ Set osfile param block
+	LDA file_name
+	STA file_params + 0
+	LDA file_name + 1
+	STA file_params + 1
+
+	LDA file_address
+	STA file_params + 2
+	LDA file_address + 1
+	STA file_params + 3
+
+	LDA #0
+	STA file_params + 6
+
+	\\ Issue osfile call
+	LDX #LO(file_params)
+	LDY #HI(file_params)
+	LDA #&FF
+	JSR OSFILE
+
+    JSR keyboardInteruptOff
+    
+    RTS
+}
+
+.printDecimal
+{
+   LDX #&FF:SEC                         \ Prepare for subtraction
+.printDecimal100
+   INX:SBC #100:BCS printDecimal100     \ Count how many 100s
+   ADC #100:JSR printDecimalDigit       \ Print the 100s
+   LDX #&FF:SEC                         \ Prepare for subtraction
+.printDecimal10
+   INX:SBC #10:BCS printDecimal10       \ Count how many 10s
+   ADC #10:JSR printDecimalDigit        \ Print the 10s
+   TAX                                  \ Pass 1s into X
+.printDecimalDigit
+   PHA:TXA                              \ Save A, pass digit to A
+   ORA #'0':JSR OSWRCH                  \ Convert to character and print it
+   PLA:RTS                              \ Restore A and return
+}
+
+.printstring
+{
+    STX writeptr
+    STY writeptr + 1
+    LDY #&00 
+.printstringloop
+    LDA (writeptr),Y 
+    JSR OSWRCH
+    INY
+    CMP #&0D
+    BNE printstringloop 
+    RTS
+}
+
+.printtab
+{
+    LDA #31
+    JSR OSWRCH 
+    TXA
+    JSR OSWRCH 
+    TYA
+    JMP OSWRCH
+}   
+
+.restoreScreenMode
+{
+    LDA &282
+    STA &FE07
+
+    RTS
+}
+
+
+.setPalette
+{
+    LDX #LO(palette_block)
+    LDY #HI(palette_block)
+    LDA #12
+    JSR OSWORD
+
+    RTS
+}
+
+.setPaletteColour
+{
+    LDA &240
+.wait
+    CMP &240
+    BEQ wait
+  
+    LDA #0
+    STX palette_block+0
+    STY palette_block+1
+    STA palette_block+2
+    STA palette_block+3
+    STA palette_block+4
+
+    JSR setPalette
+
+    RTS
+}
+
+.tempChangeScreenMode
+{
+    ; Inputs: A = Mode (0 - 6)
+    ASL A:ASL A:ASL A
+    ORA #%10000000
+    STA &FE07
+
+    RTS
+}
+
+\ ******************************************************************
+\ *	Look up tables
+\ ******************************************************************
+.LookUp640
+EQUB &00,&00,&80,&02,&00,&05,&80,&07,&00,&0A,&80,&0C,&00,&0F,&80,&11
+EQUB &00,&14,&80,&16,&00,&19,&80,&1B,&00,&1E,&80,&20,&00,&23,&80,&25
+EQUB &00,&28,&80,&2A,&00,&2D,&80,&2F,&00,&32,&80,&34,&00,&37,&80,&39
+EQUB &00,&3C,&80,&3E,&00,&41,&80,&43,&00,&46,&80,&48,&00,&4B,&80,&4D
+
+.oldmode
+EQUB &00
