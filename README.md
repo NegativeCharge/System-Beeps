@@ -13,3 +13,7 @@ Source code and Reaper project files: https://shiru.untergrund.net/files/system_
 **BBC Micro and Acorn Electon ports by Negative Charge**
 
 BBC Micro VGM playback routine by the Bitshifters (@simondotm / @kieranhj) - https://github.com/bitshifters
+
+**BBC Micro .SSD Download :** https://github.com/NegativeCharge/System-Beeps/blob/v1.0/system_beeps_bbc.ssd?raw=true
+
+**Acorn Electron .SSD Download :** https://github.com/NegativeCharge/System-Beeps/blob/v1.0/system_beeps_elk.ssd?raw=true
