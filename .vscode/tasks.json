@@ -10,7 +10,7 @@
             "label": "system_beeps_bbc.ssd",
             "type": "shell",
             "args": [
-                "\".\\system_beeps\\make.bat\""
+                "\".\\system_beeps_bbc\\make.bat\""
             ],
             "problemMatcher": {
                 "owner": "6502",

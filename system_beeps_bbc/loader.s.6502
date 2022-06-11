@@ -4,19 +4,19 @@ ORG 0
 GUARD &9F
 
 \ Header Files
-INCLUDE ".\system_beeps\loader.h.6502"
-INCLUDE ".\system_beeps\lib\os.h.6502"
-INCLUDE ".\system_beeps\lib\exomizer\v2.0.9\exomizer.h.6502"
-INCLUDE ".\system_beeps\lib\exomizer\v3.1.0\exomizer.h.6502"
-INCLUDE ".\system_beeps\lib\vgmplayer.h.6502"
-INCLUDE ".\system_beeps\lib\charplot.h.6502"
+INCLUDE ".\system_beeps_bbc\loader.h.6502"
+INCLUDE ".\system_beeps_bbc\lib\os.h.6502"
+INCLUDE ".\system_beeps_bbc\lib\exomizer\v2.0.9\exomizer.h.6502"
+INCLUDE ".\system_beeps_bbc\lib\exomizer\v3.1.0\exomizer.h.6502"
+INCLUDE ".\system_beeps_bbc\lib\vgmplayer.h.6502"
+INCLUDE ".\system_beeps_bbc\lib\charplot.h.6502"
 .zp_end
 
 CLEAR 0, &3000
 GUARD Loader_addr
 ORG Exo_addr
 .exo3_start
-	INCLUDE ".\system_beeps\lib\exomizer\v3.1.0\exomizer.s.6502"
+	INCLUDE ".\system_beeps_bbc\lib\exomizer\v3.1.0\exomizer.s.6502"
 .exo3_end
 
 SAVE "EXO3", exo3_start, exo3_end
@@ -46,11 +46,11 @@ RHZ = (VIA_HZ / SAMP_HZ) - 2
 PRINT "TIMER1_RATE ", RHZ
 
 .loader_start
-INCLUDE ".\system_beeps\titleScreen.s.6502"
-INCLUDE ".\system_beeps\lib\os.s.6502"
-INCLUDE ".\system_beeps\lib\exomizer\v2.0.9\exomizer.s.6502"
-INCLUDE ".\system_beeps\lib\vgmplayer.s.6502"
-INCLUDE ".\system_beeps\lib\charplot.s.6502"
+INCLUDE ".\system_beeps_bbc\titleScreen.s.6502"
+INCLUDE ".\system_beeps_bbc\lib\os.s.6502"
+INCLUDE ".\system_beeps_bbc\lib\exomizer\v2.0.9\exomizer.s.6502"
+INCLUDE ".\system_beeps_bbc\lib\vgmplayer.s.6502"
+INCLUDE ".\system_beeps_bbc\lib\charplot.s.6502"
 
 .cursorState
     EQUB 0
@@ -615,34 +615,34 @@ DATA_ADDR = P%
 \ * Supporting Files
 \ ******************************************************************
 
-PUTFILE ".\system_beeps\screens\cover.exo","COVER",DATA_ADDR
-PUTFILE ".\system_beeps\screens\menu.exo","MENU",DATA_ADDR
-PUTFILE ".\system_beeps\BOOT","!BOOT",&FFFF
+PUTFILE ".\system_beeps_bbc\screens\cover.exo","COVER",DATA_ADDR
+PUTFILE ".\system_beeps_bbc\screens\menu.exo","MENU",DATA_ADDR
+PUTFILE ".\system_beeps_bbc\BOOT","!BOOT",&FFFF
 
 \ ******************************************************************
 \ * Track Data
 \ ******************************************************************
 
-PUTFILE ".\system_beeps\tracks\sys.bin.exo", "T1", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\tmb.bin.exo", "T2", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\btl.bin.exo", "T3", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\mnc.bin.exo", "T4", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\hst.bin.exo", "T5", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\bad.bin.exo", "T6", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\dld.bin.exo", "T7", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\hsh.bin.exo", "T8", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\flo.bin.exo", "T9", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\pxl.bin.exo", "TA", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\ssd.bin.exo", "TB", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\led.bin.exo", "TC", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\clo.bin.exo", "TD", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\txr.bin.exo", "TE", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\srv.bin.exo", "TF", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\stf.bin.exo", "U1", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\asf.bin.exo", "U2", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\run.bin.exo", "U3", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\mym.bin.exo", "U4", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\sqw.bin.exo", "U5", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\fin.bin.exo", "U6", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\coy.bin.exo", "U7", DATA_ADDR
-PUTFILE ".\system_beeps\tracks\aon.bin.exo", "U8", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\sys.bin.exo", "T1", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\tmb.bin.exo", "T2", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\btl.bin.exo", "T3", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\mnc.bin.exo", "T4", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\hst.bin.exo", "T5", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\bad.bin.exo", "T6", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\dld.bin.exo", "T7", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\hsh.bin.exo", "T8", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\flo.bin.exo", "T9", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\pxl.bin.exo", "TA", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\ssd.bin.exo", "TB", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\led.bin.exo", "TC", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\clo.bin.exo", "TD", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\txr.bin.exo", "TE", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\srv.bin.exo", "TF", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\stf.bin.exo", "U1", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\asf.bin.exo", "U2", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\run.bin.exo", "U3", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\mym.bin.exo", "U4", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\sqw.bin.exo", "U5", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\fin.bin.exo", "U6", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\coy.bin.exo", "U7", DATA_ADDR
+PUTFILE ".\system_beeps_bbc\tracks\aon.bin.exo", "U8", DATA_ADDR
