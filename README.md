@@ -2,7 +2,7 @@
 
 **A chip music album by Shiru**
 
-[![System Beeps - BBC Micro Port](https://img.youtube.com/vi/oO1Gj5htfd8/0.jpg)](https://www.youtube.com/watch?v= oO1Gj5htfd8)
+[![System Beeps - BBC Micro Port](https://img.youtube.com/vi/oO1Gj5htfd8/0.jpg)](https://www.youtube.com/watch?v=oO1Gj5htfd8)
 
 An in-depth 'making of' article: https://habr.com/en/post/439192/
 
