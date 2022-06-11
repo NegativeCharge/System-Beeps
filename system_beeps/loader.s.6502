@@ -181,6 +181,8 @@ INCLUDE ".\system_beeps\lib\charplot.s.6502"
     JSR renderTitleScreen
     JSR setPalette
 
+    ;JSR initEventHandler
+
 .keyloop
  
     \\ Wait for keypress within 2 secs
@@ -269,6 +271,7 @@ INCLUDE ".\system_beeps\lib\charplot.s.6502"
 
     JSR	vgm_init_stream
 
+    ;JSR enableVsync
     jsr inittimer1irq
 
     JMP keyloop2
@@ -307,8 +310,88 @@ INCLUDE ".\system_beeps\lib\charplot.s.6502"
     STA track_ended
 
     JSR vgm_deinit_player
+    ;JSR disableVsync
 
     JMP keyloop2
+
+; Event Handler
+.initEventHandler
+{
+    SEI
+
+    \\ Hook the interval timer
+    LDA &220
+    STA eventHandlerOldEvent
+
+    LDA &221
+    STA eventHandlerOldEvent+1
+
+    LDA #LO(eventHandler)
+    STA &220
+
+    LDA #HI(eventHandler)
+    STA &221
+
+    CLI
+
+    RTS
+}
+
+.eventHandler
+{
+    PHP
+
+    CMP #4                                  ; Start of VSYNC
+    BNE checkIntervalTimerCrossingZeroEvent
+    JSR startOfVsyncEvent
+    JMP done
+
+.checkIntervalTimerCrossingZeroEvent
+    CMP #5                                  ; Interval timer crossing zero
+    BNE checkEscapeConditionDetectedEvent
+    JSR intervalTimerCrossingZeroEvent
+    JMP done
+
+.checkEscapeConditionDetectedEvent
+    CMP #6                                  ; ESCAPE condition detected
+    JSR escapeConditionDetectedEvent
+
+.done
+    PLP
+    JMP (eventHandlerOldEvent)
+}
+
+.startOfVsyncEvent
+{
+    RTS
+}
+
+
+.intervalTimerCrossingZeroEvent
+{
+    RTS
+}
+
+.escapeConditionDetectedEvent
+{
+    RTS
+}
+
+.enableVsync
+{
+    \ Enable VSync event
+    LDA #14
+    LDX #4
+    JMP OSBYTE                       ; *FX14,4
+}
+
+.disableVsync
+{
+    \ Disable VSync event
+    LDA #13
+    LDX #4
+    JMP OSBYTE      ; *FX13,4}
+}
 
 ; IRQ handler
 .inittimer1irq
@@ -466,16 +549,6 @@ ENDIF
     EQUB 0
 }
 
-.printtab
-{
-    LDA #31
-    JSR OSWRCH 
-    TXA
-    JSR OSWRCH 
-    TYA
-    JMP OSWRCH
-}
-
 .track_filenames
     EQUS ":0.$.T1", 13
     EQUS ":0.$.T2", 13
@@ -506,6 +579,17 @@ EQUB &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, &60, &E0, 
 
 .menu_item_pos_hi
 EQUS &4B, &4E, &50, &53, &55, &58, &5A, &5D, &5F, &62, &64, &67, &69, &6C, &6E, &71, &4C, &4F, &51, &54, &56, &59, &60
+
+.vu_row_pos_lo
+EQUS &D0, &50, &D0
+
+.vu_row_pos_hi
+EQUS &7B, &79, &76
+
+.file_number        
+    EQUB 0
+.last_key_pressed
+    EQUB 0
 
 .loader_end
 

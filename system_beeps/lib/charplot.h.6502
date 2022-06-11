@@ -1,4 +1,6 @@
 .saveA          SKIP 1
+.saveX          SKIP 1
+.saveY          SKIP 1
 .counter        SKIP 1
 .temp           SKIP 1
 .right_bit      SKIP 1

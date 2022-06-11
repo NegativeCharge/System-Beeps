@@ -15,6 +15,3 @@ PAL_4 = 2
 MODE1_base_addr = &3000
 MODE1_char_height = 32
 MODE1_char_width = 40
-
-.file_number        SKIP 1
-.last_key_pressed   SKIP 1

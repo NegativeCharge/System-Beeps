@@ -16,6 +16,8 @@
     STA &221
 
     CLI
+
+    RTS
 }
 
 .enableIntervalTimer

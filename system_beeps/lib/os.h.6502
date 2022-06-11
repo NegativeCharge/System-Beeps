@@ -79,3 +79,5 @@ SHEILA_USER_VIA_R14_IER = &FE6E
 .file_params		SKIP 18
 .file_name          SKIP 2
 .file_address       SKIP 2
+
+.eventHandlerOldEvent       SKIP 2

@@ -7,12 +7,8 @@
 .PrintChar
 {
     STA saveA
-
-    ; save registers
-	tya
-	pha
-	txa
-	pha
+    STY saveY
+    STX saveX
     
     LDA #0
     STA temp            ; clear temp
@@ -77,10 +73,9 @@
 
 .finished    
     LDA saveA
-    pla
-	tax
-	pla
-	tay
+    LDY saveY
+    LDX saveX
+    
     RTS
 }
 

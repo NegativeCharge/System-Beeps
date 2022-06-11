@@ -7,7 +7,7 @@
     ],
     "tasks": [
         {
-            "label": "system_beeps.ssd",
+            "label": "system_beeps_bbc.ssd",
             "type": "shell",
             "args": [
                 "\".\\system_beeps\\make.bat\""

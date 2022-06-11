@@ -16,7 +16,7 @@ VGM_EXO_EOF = FALSE		; no FF byte at the end; rely on exo to tell us when the tu
 \ ******************************************************************
 
 IF VGM_FX
-VGM_FX_num_freqs = 32				; number of VU bars - can be 16 or 32
+VGM_FX_num_freqs = 16				; number of VU bars - can be 16 or 32
 VGM_FX_num_channels = 4				; number of beat bars (one per channel)
 
 \\ Frequency array for vu-meter effect, plus beat bars for 4 channels
