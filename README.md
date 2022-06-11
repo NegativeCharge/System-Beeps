@@ -10,7 +10,7 @@ See it running: https://youtu.be/tUy1MEpqbvk
 
 Source code and Reaper project files: https://shiru.untergrund.net/files/system_beeps_src.zip
 
-**BBC Micro and Acorn Electon ports by Negative Charge**
+**BBC Micro and Acorn Electron ports by Negative Charge**
 
 BBC Micro VGM playback routine by the Bitshifters (@simondotm / @kieranhj) - https://github.com/bitshifters
 
