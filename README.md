@@ -12,7 +12,7 @@ Source code and Reaper project files: https://shiru.untergrund.net/files/system_
 
 **BBC Micro and Acorn Electron ports by Negative Charge**
 
-BBC Micro VGM playback routine by the Bitshifters (@simondotm / @kieranhj) - https://github.com/bitshifters
+BBC Micro VGM playback routine by the Bitshifters ([@simondotm](https://github.com/simondotm) / [@kieranhj](https://github.com/kieranhj)) - https://github.com/bitshifters
 
 Sprite routines by @fizgog : https://github.com/fizgog
 
